@@ -1,9 +1,20 @@
+import types
 
 class Reagent: # O ile to robimy, można też nieobiektowo albo ze stałym modelem
-    fun : function # Function describing the reagent's dynamics
+    code : types.CodeType # Code describing the reagent's dynamics
     initial : int # Initial number of reagent's particles
     def __init__(self):
         pass
+
+# Sample code which demonstrates how code objects could be created and used
+'''
+text = "b=a*2"
+code = compile(text, '<string>', "exec")
+
+env = {'a':12}
+exec(code, env)
+print(env['b'])
+'''
 
 
 # Function that implements the Runge-Kutta algorithm of 4th order
