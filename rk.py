@@ -76,18 +76,35 @@ class Reagent:
         return(env_new[self.symbol])
 
 
-# Sample code which demonstrates how code objects could be created and used
+# Sample code demonstrating how the Reagent class is used
 '''
-text = "b=a*2"
-code = compile(text, '<string>', "exec")
+reagentA = Reagent("A = B * 3", 100, 'A', "Reagent A")
+reagentB = Reagent("B = A + 6", 100, 'B', "Reagent B")
 
-env = {'a':12}
-exec(code, env)
-print(env['b'])
+print(f"Reagent counts:\n{reagentA.name}: {reagentA.count}\n{reagentB.name}: {reagentB.count}")
+print(f"Reagent timetables:\n{reagentA.name}: {reagentA.timetable}\n{reagentB.name}: {reagentB.timetable}")
+
+res_a = reagentA.calculate({reagentB.symbol : reagentB.count})
+print(f"\nWhere {reagentA.name}'s function is {reagentA.symbol.lower()}: {reagentA.symbol.lower()}({reagentB.symbol}) = {res_a}")
+
+res_b = reagentB.calculate({reagentA.symbol : reagentA.count})
+print(f"Where {reagentB.name}'s function is {reagentB.symbol.lower()}: {reagentB.symbol.lower()}({reagentA.symbol}) = {res_b}")
+
+print("\nTime elapsed: 6")
+reagentA.change(6, to=res_a)
+reagentB.change(6, to=res_b)
+
+print(f"\nReagent timetables:\n{reagentA.name}: {reagentA.timetable}\n{reagentB.name}: {reagentB.timetable}")
 '''
 
 
 # Function that implements the Runge-Kutta algorithm of 4th order
+# Arguments:
+#   model - list of Reagent objects, specifies all reagents which take part in the reaction.
+#       Reagent-s should all use standardized symbols, i.e. if Reagent A's function depends on
+#       Reagent B's count, code of Reagent A should use Reagent B's symbol written exactly the same,
+#       to represent that value.
+#   step - float, a time step of the model (time which passes between each step of the algorithm)
 def rk_4(model : list, step : float):
     return
 

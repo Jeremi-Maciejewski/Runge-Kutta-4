@@ -22,6 +22,7 @@ Do tego pewnie długość kroku, bo głupio wpisywać na twardo w funkcję.
 
 Update:
 I tak zrobiłem już klasę do tych obiektów ('Reagent'), bo uznałem, że przydadzą się też jako input do rysowania wykresu - więc chyba użyjemy tak czy tak, nie zaszkodzą.
+Dodałem tutorial jak działa, tylko musisz go odcommentować.
 ~Jeremi
 
 
