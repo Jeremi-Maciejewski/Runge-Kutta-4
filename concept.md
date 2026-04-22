@@ -19,6 +19,12 @@ Myślę, że możnaby podawać listę customowych obiektów reprezentujących ka
 Do tego pewnie długość kroku, bo głupio wpisywać na twardo w funkcję.
 ~Jeremi
 
+
+Update:
+I tak zrobiłem już klasę do tych obiektów ('Reagent'), bo uznałem, że przydadzą się też jako input do rysowania wykresu - więc chyba użyjemy tak czy tak, nie zaszkodzą.
+~Jeremi
+
+
 ## Implementacja
 
 ## Output
@@ -28,6 +34,10 @@ Do tego pewnie długość kroku, bo głupio wpisywać na twardo w funkcję.
 (najwyraźniej mają być wykresy)
 
 Matplotlib + pyplot i proste wykresy liniowe, I guess?
+~Jeremi
+
+## Input
+Jeden lub lista obiektów, o których wspomniałem przy inpucie do implementacji (zapisują zmiany odczynnika w czasie)(class Reagent)
 ~Jeremi
 
 
