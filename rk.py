@@ -1,4 +1,7 @@
 import types, copy
+import matplotlib
+import matplotlib.pyplot as plt
+
 
 # Class for objects representing reagents in a chemical reaction
 class Reagent:
@@ -34,6 +37,18 @@ class Reagent:
 
         self.timetable = [(0.0, initial)]
 
+    # Pretty printing.
+    def __str__(self):
+        return("".join(['<', str(self.count), " particles of ", self.name, '>']))
+
+    # Returns a set of all variables which are required by this Reagent's function.
+    # These are variables which need to be supplied in .calculate()'s 'env' argument (as dict keys).
+    # Note: Current Reagent's symbol always appears on output if it is assigned to, (it should be)
+    #   even if the function does not depend on it - in which case it does not need to be passed to
+    #   .calculate() (but can be, without any effect).
+    #returns: set of strings - symbols of required variables
+    def get_vars(self):
+        return set(self.code.co_names)
 
     # Register a new state of the reagent.
     # Note, one and only one of 'by' and 'to' needs to be specified.
@@ -57,7 +72,6 @@ class Reagent:
         self.timetable.append((float(time), newc))
         self.count = newc
 
-
     # Calculate the value of reagent's function for a given set of parameters.
     # Arguments:
     #   env - dict, specifies key-value pairs such as var : value
@@ -78,11 +92,12 @@ class Reagent:
 
 # Sample code demonstrating how the Reagent class is used
 '''
-reagentA = Reagent("A = B * 3", 100, 'A', "Reagent A")
+reagentA = Reagent("A = B * 3", 150, 'A', "Reagent A")
 reagentB = Reagent("B = A + 6", 100, 'B', "Reagent B")
 
-print(f"Reagent counts:\n{reagentA.name}: {reagentA.count}\n{reagentB.name}: {reagentB.count}")
-print(f"Reagent timetables:\n{reagentA.name}: {reagentA.timetable}\n{reagentB.name}: {reagentB.timetable}")
+print(f"Reagents:\n{reagentA.symbol}: {reagentA}\n{reagentB.symbol}: {reagentB}")
+print(f"\nReagent timetables:\n{reagentA.name}: {reagentA.timetable}\n{reagentB.name}: {reagentB.timetable}")
+print(f"\nReagent dependencies:\n{reagentA.name}: {reagentA.get_vars()}\n{reagentB.name}: {reagentB.get_vars()}")
 
 res_a = reagentA.calculate({reagentB.symbol : reagentB.count})
 print(f"\nWhere {reagentA.name}'s function is {reagentA.symbol.lower()}: {reagentA.symbol.lower()}({reagentB.symbol}) = {res_a}")
@@ -91,12 +106,14 @@ res_b = reagentB.calculate({reagentA.symbol : reagentA.count})
 print(f"Where {reagentB.name}'s function is {reagentB.symbol.lower()}: {reagentB.symbol.lower()}({reagentA.symbol}) = {res_b}")
 
 print("\nTime elapsed: 6")
+# Normally, of course, these functions' result would not be directly applied to particle count,
+# since that way count of Reagent A is only dependent on count of Reagent B and not at all on its
+# previous count - that's just an usage example, though
 reagentA.change(6, to=res_a)
 reagentB.change(6, to=res_b)
 
 print(f"\nReagent timetables:\n{reagentA.name}: {reagentA.timetable}\n{reagentB.name}: {reagentB.timetable}")
 '''
-
 
 # Function that implements the Runge-Kutta algorithm of 4th order
 # Arguments:
@@ -110,5 +127,8 @@ def rk_4(model : list, step : float):
 
 
 # Function that draws a plot of single reagent's change in time
-def draw_reagent_plot():
+# Arguments:
+#   reagent - Reagent object, specifies the reagent, change of which is to be plotted. Note that data
+#       for change in time is taken from object's timetable member, so don't forget to populate that!
+def draw_reagent_plot(reagent):
     return
