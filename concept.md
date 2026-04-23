@@ -34,12 +34,19 @@ Dodałem tutorial jak działa, tylko musisz go odcommentować.
 # Wizualizacja
 (najwyraźniej mają być wykresy)
 
-Matplotlib + pyplot i proste wykresy liniowe, I guess?
+Już zaimplementowane jako funkcja `draw_reagent_plot`
 ~Jeremi
 
-## Input
-Jeden lub lista obiektów, o których wspomniałem przy inpucie do implementacji (zapisują zmiany odczynnika w czasie)(class Reagent)
-~Jeremi
+<details>
+    <summary>Historyczne wpisy</summary>
+
+    Matplotlib + pyplot i proste wykresy liniowe, I guess?
+    ~Jeremi
+
+    ## Input:
+    Jeden lub lista obiektów, o których wspomniałem przy inpucie do implementacji (zapisują zmiany odczynnika w czasie)(class Reagent)
+    ~Jeremi
+</details>
 
 
 # Kompilacja

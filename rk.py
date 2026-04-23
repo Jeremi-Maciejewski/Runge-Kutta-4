@@ -130,5 +130,38 @@ def rk_4(model : list, step : float):
 # Arguments:
 #   reagent - Reagent object, specifies the reagent, change of which is to be plotted. Note that data
 #       for change in time is taken from object's timetable member, so don't forget to populate that!
-def draw_reagent_plot(reagent):
-    return
+#
+#   file - Name of image file to which to draw the plot.
+#   labels - A dictionary of label texts. Use '$name$' to insert reagent name.
+#       Recognized label keys: title, xaxis, yaxis
+def draw_reagent_plot(reagent, file=None, labels={"title" : "Number of particles of $name$ in time",
+                                        "xaxis" : "Time", "yaxis" : "$name$ particles"}):
+    time = [record[0] for record in reagent.timetable]
+    count = [record[1] for record in reagent.timetable]
+
+    plt.figure(figsize=(1360/60, 768/60), dpi=60) # ~HD resolution
+
+    p = plt.plot(time, count)
+
+    labels_repl = {k : v.replace("$name$", reagent.name) for k,v in labels.items()}
+
+    plt.suptitle(labels_repl.get("title", ""), fontsize=24)
+    plt.xlabel(labels_repl.get("xaxis", ""), fontsize=18)
+    plt.ylabel(labels_repl.get("yaxis", ""), fontsize=18)
+
+    if file:
+        plt.savefig(file)
+
+
+# Plotting test
+'''
+import random # Just for test purposes
+reagentA = Reagent("A = B * 3", 150, 'A', "Cysteina")
+
+for i in range(100):
+    reagentA.change(i, by = random.randint(-5, 5))
+
+draw_reagent_plot(reagentA, file="Testplot.png",
+                    labels={"title" : "Liczba cząsteczek związku $name$ zależnie od czasu",
+                            "xaxis" : "Czas", "yaxis" : "Cząsteczki związku $name$"})
+'''
