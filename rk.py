@@ -1,129 +1,82 @@
 import types, copy
+import math
 import matplotlib
 import matplotlib.pyplot as plt
 
-
-# Class for objects representing reagents in a chemical reaction
-class Reagent:
-    code : types.CodeType # Code of a function describing the reagent's dynamics
-    count : int # Current number of reagent's particles
-    symbol : str # Symbol of the reagent - this is also the variable name to which the code assigns
-    name : str # Pretty name of the reagent, for visualization
-    # A list of 2-element tuples such that the 1st element specifies a timestamp (float) and 2nd
-    # a number of particles at that moment in time (int)
-    timetable : list
-
-    # Object constructor.
-    # Arguments:
-    #   code - text specifying the code. This is compile()'d to produce the member 'code'.
-    #       Should assign its result to a local variable with name identical to 'symbol'.
-    #   initial - integer, an initial number of reagent's particles. Assigned to member 'count'.
-    #   symbol - string, symbol (variable name) of th reagent, should be assigned to in code.
-    #       Becomes the member 'symbol'.
-    #   name - string, optional, defaults to symbol, a pretty name of the reagent, for visualization.
-    def __init__(self, code, initial, symbol, name=None):
-        assert type(code) is str
-        assert type(initial) is int
-        assert type(symbol) is str
-        assert type(name) is str or name is None
-
-        self.code = compile(code, '<string>', "exec")
-        self.count = initial
-        self.symbol = symbol
-        if name is not None:
-            self.name = name
-        else:
-            self.name = symbol
-
-        self.timetable = [(0.0, initial)]
-
-    # Pretty printing.
-    def __str__(self):
-        return("".join(['<', str(self.count), " particles of ", self.name, '>']))
-
-    # Returns a set of all variables which are required by this Reagent's function.
-    # These are variables which need to be supplied in .calculate()'s 'env' argument (as dict keys).
-    # Note: Current Reagent's symbol always appears on output if it is assigned to, (it should be)
-    #   even if the function does not depend on it - in which case it does not need to be passed to
-    #   .calculate() (but can be, without any effect).
-    #returns: set of strings - symbols of required variables
-    def get_vars(self):
-        return set(self.code.co_names)
-
-    # Register a new state of the reagent.
-    # Note, one and only one of 'by' and 'to' needs to be specified.
-    # Arguments:
-    #   time - float, a time at which this state occured.
-    #   by - integer, optional, how the number of particles changed, e.g. -2 -> 2 particles were removed.
-    #   to - integer, optional, to what destination number did the count of particles change.
-    def change(self, time, by=None, to=None):
-        if by is None and to is None:
-            raise ValueError("Neither 'by' nor 'to' were specified!")
-        elif by is not None and to is not None:
-            raise ValueError("Both 'by' and 'to' were specified, don't know which to use!")
-        elif by is not None:
-            assert type(by) is int
-            newc = self.count + int(by)
-        else:
-            assert type(to) is int
-            newc = int(to)
-
-        assert type(time) is float or type(time) is int
-        self.timetable.append((float(time), newc))
-        self.count = newc
-
-    # Calculate the value of reagent's function for a given set of parameters.
-    # Arguments:
-    #   env - dict, specifies key-value pairs such as var : value
-    #       where var is a variable present in object's code and value is its value to use in
-    #       calculations.
-    #
-    # returns: (type unknown) Value which object's code assigns to its symbol (value of reagent's function)
-    def calculate(self, env):
-        env_new = copy.deepcopy(env)
-
-        exec(self.code, env_new)
-
-        if not env_new.get(self.symbol):
-            raise AttributeError(f"The object's code does not create local variable '{self.symbol}' (as specified by member 'symbol'). This means that the object is internally corrupted - either discard it or recreate with valid parameters.")
-
-        return(env_new[self.symbol])
-
-
-# Sample code demonstrating how the Reagent class is used
-'''
-reagentA = Reagent("A = B * 3", 150, 'A', "Reagent A")
-reagentB = Reagent("B = A + 6", 100, 'B', "Reagent B")
-
-print(f"Reagents:\n{reagentA.symbol}: {reagentA}\n{reagentB.symbol}: {reagentB}")
-print(f"\nReagent timetables:\n{reagentA.name}: {reagentA.timetable}\n{reagentB.name}: {reagentB.timetable}")
-print(f"\nReagent dependencies:\n{reagentA.name}: {reagentA.get_vars()}\n{reagentB.name}: {reagentB.get_vars()}")
-
-res_a = reagentA.calculate({reagentB.symbol : reagentB.count})
-print(f"\nWhere {reagentA.name}'s function is {reagentA.symbol.lower()}: {reagentA.symbol.lower()}({reagentB.symbol}) = {res_a}")
-
-res_b = reagentB.calculate({reagentA.symbol : reagentA.count})
-print(f"Where {reagentB.name}'s function is {reagentB.symbol.lower()}: {reagentB.symbol.lower()}({reagentA.symbol}) = {res_b}")
-
-print("\nTime elapsed: 6")
-# Normally, of course, these functions' result would not be directly applied to particle count,
-# since that way count of Reagent A is only dependent on count of Reagent B and not at all on its
-# previous count - that's just an usage example, though
-reagentA.change(6, to=res_a)
-reagentB.change(6, to=res_b)
-
-print(f"\nReagent timetables:\n{reagentA.name}: {reagentA.timetable}\n{reagentB.name}: {reagentB.timetable}")
-'''
-
 # Function that implements the Runge-Kutta algorithm of 4th order
 # Arguments:
-#   model - list of Reagent objects, specifies all reagents which take part in the reaction.
-#       Reagent-s should all use standardized symbols, i.e. if Reagent A's function depends on
-#       Reagent B's count, code of Reagent A should use Reagent B's symbol written exactly the same,
+#   model - dict of symbol : code where symbol is a string representing a reagent and
+#       code is a string with function code of said reagent.
+#       Code strings should all use standardized symbols, i.e. if reagent A's function depends on
+#       reagent B's count, code of reagent A should use reagent B's symbol written exactly the same,
 #       to represent that value.
+#   start - dict of symbol : num, where symbol is a string representing a reagent, same as in 'model',
+#       and num is an initial number particles of that reagent.
 #   step - float, a time step of the model (time which passes between each step of the algorithm)
-def rk_4(model : list, step : float):
-    return
+#   timespan - a destiantion time of the simulation, i.e. a time, upon reaching which, the
+#       algorithm stops execution. Time always starts as 0 and increases by 'step' on every step
+#       of the algorithm.
+def rk4(model : dict, start : dict, step : float, timespan : float):
+    currstate = copy.deepcopy(start) # Current state of reactor, i.e. numbers of particles
+    univ_globals = {"__builtins__":{}, "pow" : math.pow, "root" : lambda x, y : pow(x, 1/y),
+                    "sqrt" : math.sqrt}
+
+    time = 0 # Current time
+    timetable = [0] # List of recorded points in time
+    states = {symbol : [count] for symbol, count in start.items()} # dict of symbol : list of states
+
+    while time+step <= timespan: # Repeat until we reach destination time
+        k1s = [] # List of k1 values of all reagents
+        for symbol in model: # Calculate k1 values by evaluating reagent functions
+            k1 = eval(model[symbol], globals=univ_globals, locals=currstate)
+            k1s.append(k1)
+
+        del k1
+        # For next step, the values of supplied reagent quantities need to be modified
+        # X = Xn + step/2 * k1(Xn)
+        env_k1 = {list(model.keys())[i] : list(currstate.values())[i] + step/2 * k1s[i] for i in range(len(model))}
+
+        k2s = [] # List of k2 values of all reagents
+        for symbol in model:
+            k2 = eval(model[symbol], globals=univ_globals, locals=env_k1)
+            k2s.append(k2)
+
+        del env_k1, k2
+        # For next step, the values of supplied reagent quantities need to be modified
+        # X = Xn + step/2 * k2(Xn)
+        env_k2 = {list(model.keys())[i] : list(currstate.values())[i] + step/2 * k2s[i] for i in range(len(model))}
+
+        k3s = [] # List of k3 values of all reagents
+        for symbol in model:
+            k3 = eval(model[symbol], globals=univ_globals, locals=env_k2)
+            k3s.append(k3)
+
+        del env_k2, k3
+        # For next step, the values of supplied reagent quantities need to be modified
+        # X = Xn + step * k3(Xn)
+        env_k3 = {list(model.keys())[i] : list(currstate.values())[i] + step * k3s[i] for i in range(len(model))}
+
+        k4s = [] # List of k4 values of all reagents
+        for symbol in model:
+            k4 = eval(model[symbol], globals=univ_globals, locals=env_k3)
+            k4s.append(k4)
+
+
+        # Calculate final reagent counts for this step and save them
+        for i, symbol in enumerate(model):
+            newstate = currstate[symbol] + step * (1/6) * (k1s[i] + 2*k2s[i] + 2*k3s[i] + k4s[i])
+
+            states[symbol].append(newstate)
+            currstate[symbol] = newstate
+
+        # Update time
+        time += step
+        timetable.append(time)
+
+        del k1s, k2s, k3s, k4s, k4, env_k3
+
+
+    return timetable, states
 
 
 # Function that draws a plot of single reagent's change in time
@@ -152,6 +105,16 @@ def draw_reagent_plot(reagent, file=None, labels={"title" : "Number of particles
     if file:
         plt.savefig(file)
 
+
+# rk4 test
+'''
+mdl = {'A' : "10 - 2*pow(10, -4) * A * B", 'B' : "5*pow(10, -2) * A - 2*pow(10, -2) * B"}
+start = {'A' : 100, 'B' : 200}
+timetable, states = rk4(mdl, start, 6, 12)
+
+print(timetable)
+print(states)
+'''
 
 # Plotting test
 '''

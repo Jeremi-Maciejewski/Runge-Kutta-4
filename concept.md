@@ -8,27 +8,15 @@ Możnaby się bawić w jakiś JSON albo XML ale chyba to przesada tutaj, więc p
 
 
 # Funkcja implementująca sam algorytm
+ZAIMPLEMENTOWANA
 
 ## Input
-(tylko pod warunkiem, że ze zmiennym modelem)
 
-Myślę, że możnaby podawać listę customowych obiektów reprezentujących każdy z czynników (zmiennych/cząsteczek):
- - definiujących funkcję na obliczenie danej zmiennej - może można by nawet podawać ją już napisaną, żeby model tylko wywoływał
- - oraz stan początkowy zmiennej
-
-Do tego pewnie długość kroku, bo głupio wpisywać na twardo w funkcję.
-~Jeremi
-
-
-Update:
-I tak zrobiłem już klasę do tych obiektów ('Reagent'), bo uznałem, że przydadzą się też jako input do rysowania wykresu - więc chyba użyjemy tak czy tak, nie zaszkodzą.
-Dodałem tutorial jak działa, tylko musisz go odcommentować.
-~Jeremi
-
-
-## Implementacja
+Słownik z kodem funkcji odczynników, słownik z wartościami startowymi, krok czasowy, czas docelowy
 
 ## Output
+
+Lista punktów w czasie, słownik z listami wartości dla tych punktów w czasie, dla każdego odczynnika
 
 
 # Wizualizacja
@@ -36,17 +24,6 @@ Dodałem tutorial jak działa, tylko musisz go odcommentować.
 
 Już zaimplementowane jako funkcja `draw_reagent_plot`
 ~Jeremi
-
-<details>
-    <summary>Historyczne wpisy</summary>
-
-    Matplotlib + pyplot i proste wykresy liniowe, I guess?
-    ~Jeremi
-
-    ## Input:
-    Jeden lub lista obiektów, o których wspomniałem przy inpucie do implementacji (zapisują zmiany odczynnika w czasie)(class Reagent)
-    ~Jeremi
-</details>
 
 
 # Kompilacja
