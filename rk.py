@@ -81,22 +81,21 @@ def rk4(model : dict, start : dict, step : float, timespan : float):
 
 # Function that draws a plot of single reagent's change in time
 # Arguments:
-#   reagent - Reagent object, specifies the reagent, change of which is to be plotted. Note that data
-#       for change in time is taken from object's timetable member, so don't forget to populate that!
-#
-#   file - Name of image file to which to draw the plot.
-#   labels - A dictionary of label texts. Use '$name$' to insert reagent name.
+#   reagentstates - List of particle counts of a reagent in various points in time.
+#   timetable - List of points in time which correspond to values in 'reagentstates'.
+#   name - Name of the reagent being considered.
+#   file - (optional string) Name of image file to which to draw the plot.
+#   labels - (optional dict) A dictionary of label texts. Use '$name$' to insert reagent name.
 #       Recognized label keys: title, xaxis, yaxis
-def draw_reagent_plot(reagent, file=None, labels={"title" : "Number of particles of $name$ in time",
+def draw_reagent_plot(reagentstates, timetable, name, file=None,
+                        labels={"title" : "Number of particles of $name$ in time",
                                         "xaxis" : "Time", "yaxis" : "$name$ particles"}):
-    time = [record[0] for record in reagent.timetable]
-    count = [record[1] for record in reagent.timetable]
 
     plt.figure(figsize=(1360/60, 768/60), dpi=60) # ~HD resolution
 
-    p = plt.plot(time, count)
+    p = plt.plot(timetable, reagentstates)
 
-    labels_repl = {k : v.replace("$name$", reagent.name) for k,v in labels.items()}
+    labels_repl = {k : v.replace("$name$", name) for k,v in labels.items()}
 
     plt.suptitle(labels_repl.get("title", ""), fontsize=24)
     plt.xlabel(labels_repl.get("xaxis", ""), fontsize=18)
@@ -110,11 +109,17 @@ def draw_reagent_plot(reagent, file=None, labels={"title" : "Number of particles
 '''
 mdl = {'A' : "10 - 2*pow(10, -4) * A * B", 'B' : "5*pow(10, -2) * A - 2*pow(10, -2) * B"}
 start = {'A' : 100, 'B' : 200}
-timetable, states = rk4(mdl, start, 6, 12)
+timetable, states = rk4(mdl, start, 6, 240)
 
 print(timetable)
 print(states)
+labs = {"title" : "Liczba cząsteczek związku $name$ zależnie od czasu",
+        "xaxis" : "Czas", "yaxis" : "Cząsteczki związku $name$"}
+
+#draw_reagent_plot(states['A'], timetable, 'A', file="data/Test_plot_A.png", labels=labs)
+#draw_reagent_plot(states['B'], timetable, 'B', file="data/Test_plot_B.png", labels=labs)
 '''
+
 
 # Plotting test
 '''
