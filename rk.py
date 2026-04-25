@@ -1,4 +1,4 @@
-import types, copy
+import copy
 import math
 import matplotlib
 import matplotlib.pyplot as plt
