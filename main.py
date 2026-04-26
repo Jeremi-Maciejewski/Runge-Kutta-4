@@ -23,11 +23,12 @@ def save_csv(path: Path, timetable, states: dict):
 
 
 # Function that generates and saves plots for each variable
-def save_plots(output_dir: Path, timetable, states: dict, labels: dict, split: bool):
+def save_plots(output_dir: Path, timetable: list, states: dict, scenario_desc: str,\
+                 labels: dict, split: bool):
     while True:
         if split:
             plot_labels = {
-                "title": "Liczba cząsteczek związku $name$ w czasie",
+                "title": f"Liczba cząsteczek związku $name$ w czasie\n{scenario_desc}",
                 "xaxis": "Czas [h]",
                 "yaxis": "Liczba cząsteczek $name$",
             }
@@ -47,7 +48,7 @@ def save_plots(output_dir: Path, timetable, states: dict, labels: dict, split: b
 
         else:
             plot_labels = {
-                "title": "Liczba cząsteczek związków w czasie",
+                "title": f"Liczba cząsteczek związków w czasie\n{scenario_desc}",
                 "xaxis": "Czas [h]",
                 "yaxis": "Liczba cząsteczek związku",
             }
@@ -84,7 +85,7 @@ def run_single_scenario(config: dict, scenario: str | None, output_dir: Path,\
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Save plots
-    save_plots(output_dir, timetable, states, labels, split)
+    save_plots(output_dir, timetable, states, description, labels, split)
 
     # Optionally save CSV
     if write_csv:

@@ -1,6 +1,6 @@
 simulation:
   step: 0.1
-  timespan: 200
+  timespan: 100
 
 variables:
   p53:
