@@ -1,6 +1,5 @@
 import copy
 import math
-import matplotlib
 import matplotlib.pyplot as plt
 
 # Function that implements the Runge-Kutta algorithm of 4th order
@@ -28,7 +27,7 @@ def rk4(model : dict, start : dict, step : float, timespan : float):
     while time+step <= timespan: # Repeat until we reach destination time
         k1s = [] # List of k1 values of all reagents
         for symbol in model: # Calculate k1 values by evaluating reagent functions
-            k1 = eval(model[symbol], globals=univ_globals, locals=currstate)
+            k1 = eval(model[symbol], univ_globals, currstate)
             k1s.append(k1)
 
         del k1
@@ -38,7 +37,7 @@ def rk4(model : dict, start : dict, step : float, timespan : float):
 
         k2s = [] # List of k2 values of all reagents
         for symbol in model:
-            k2 = eval(model[symbol], globals=univ_globals, locals=env_k1)
+            k2 = eval(model[symbol], univ_globals, env_k1)
             k2s.append(k2)
 
         del env_k1, k2
@@ -48,7 +47,7 @@ def rk4(model : dict, start : dict, step : float, timespan : float):
 
         k3s = [] # List of k3 values of all reagents
         for symbol in model:
-            k3 = eval(model[symbol], globals=univ_globals, locals=env_k2)
+            k3 = eval(model[symbol], univ_globals, env_k2)
             k3s.append(k3)
 
         del env_k2, k3
@@ -58,7 +57,7 @@ def rk4(model : dict, start : dict, step : float, timespan : float):
 
         k4s = [] # List of k4 values of all reagents
         for symbol in model:
-            k4 = eval(model[symbol], globals=univ_globals, locals=env_k3)
+            k4 = eval(model[symbol], univ_globals, env_k3)
             k4s.append(k4)
 
 
@@ -91,45 +90,66 @@ def draw_reagent_plot(reagentstates, timetable, name, file=None,
                         labels={"title" : "Number of particles of $name$ in time",
                                         "xaxis" : "Time", "yaxis" : "$name$ particles"}):
 
-    plt.figure(figsize=(1360/60, 768/60), dpi=60) # ~HD resolution
+    plt.figure(figsize=(800/60, 480/60), dpi=60) # ~WVGA resolution
 
-    p = plt.plot(timetable, reagentstates)
+    # Draw line plot
+    plt.plot(timetable, reagentstates)
 
+    # Replace special elements in labels
     labels_repl = {k : v.replace("$name$", name) for k,v in labels.items()}
 
+    # Draw other elements
     plt.suptitle(labels_repl.get("title", ""), fontsize=24)
     plt.xlabel(labels_repl.get("xaxis", ""), fontsize=18)
     plt.ylabel(labels_repl.get("yaxis", ""), fontsize=18)
 
+    # Optionally save to file
     if file:
         plt.savefig(file)
 
 
-# rk4 test
-'''
-mdl = {'A' : "10 - 2*pow(10, -4) * A * B", 'B' : "5*pow(10, -2) * A - 2*pow(10, -2) * B"}
-start = {'A' : 100, 'B' : 200}
-timetable, states = rk4(mdl, start, 6, 240)
+# Function that draws a plot of multiple reagents' change in time
+# Arguments:
+#   reagentstates - Dict of symbol : states where symbol is string, reagent's symbol and
+#       states is a list of particle counts of that reagent in various points in time.
+#
+#   timetable - List of points in time which correspond to particle counts in values of 'reagentstates'.
+#   name - Dict of symbol : name where symbol is string, reagent's symbol and name is a full
+#       name of the reagent being considered.
+#
+#   file - (optional string) Name of image file to which to draw the plot.
+#   labels - (optional dict) A dictionary of label texts. Recognized label keys: title, xaxis, yaxis
+def draw_bundled_reagent_plot(reagentstates, timetable, names, file=None,
+                                labels={"title" : "Number of particles of $name$ in time",
+                                        "xaxis" : "Time", "yaxis" : "$name$ particles"}):
 
-print(timetable)
-print(states)
-labs = {"title" : "Liczba cząsteczek związku $name$ zależnie od czasu",
-        "xaxis" : "Czas", "yaxis" : "Cząsteczki związku $name$"}
+    plt.figure(figsize=(800/60, 480/60), dpi=60) # ~WVGA resolution
 
-#draw_reagent_plot(states['A'], timetable, 'A', file="data/Test_plot_A.png", labels=labs)
-#draw_reagent_plot(states['B'], timetable, 'B', file="data/Test_plot_B.png", labels=labs)
-'''
+    # Color and line style options recognized by pyplot
+    color_symbols = list("bgrcmyk")
+    style_symbols = ['-', '--', '-.', ':']
 
+    # Draw lines
+    for idx, reagent in enumerate(reagentstates):
+        # Choose line style and color in such way that ensures that every reagent gets a
+        # unique combination
+        try:
+            col = color_symbols[idx % len(color_symbols)]
+            style = style_symbols[idx // len(color_symbols)]
 
-# Plotting test
-'''
-import random # Just for test purposes
-reagentA = Reagent("A = B * 3", 150, 'A', "Cysteina")
+        except IndexError: # Too many reagents, too few line styles available
+            raise ValueError("Cannot draw bundled plot - too many reagents!")
 
-for i in range(100):
-    reagentA.change(i, by = random.randint(-5, 5))
+        plt.plot(timetable, reagentstates[reagent], style+col, label=names[idx])
 
-draw_reagent_plot(reagentA, file="Testplot.png",
-                    labels={"title" : "Liczba cząsteczek związku $name$ zależnie od czasu",
-                            "xaxis" : "Czas", "yaxis" : "Cząsteczki związku $name$"})
-'''
+    # Draw other elements
+    plt.legend(loc=2, bbox_to_anchor=(1,1))
+    plt.suptitle(labels.get("title", ""), fontsize=24)
+    plt.xlabel(labels.get("xaxis", ""), fontsize=18)
+    plt.ylabel(labels.get("yaxis", ""), fontsize=18)
+
+    plt.tight_layout() # Ensures that elements do not stick outside the image
+
+    # Optionally save to file
+    if file:
+        plt.savefig(file)

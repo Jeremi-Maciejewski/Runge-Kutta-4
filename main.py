@@ -2,7 +2,7 @@ import argparse
 import csv
 from pathlib import Path
 
-from rk import rk4, draw_reagent_plot
+from rk import rk4, draw_reagent_plot, draw_bundled_reagent_plot
 from config_loader import load_config, build_inputs, scenario_names
 
 
@@ -23,29 +23,58 @@ def save_csv(path: Path, timetable, states: dict):
 
 
 # Function that generates and saves plots for each variable
-def save_plots(output_dir: Path, timetable, states: dict, labels: dict):
-    plot_labels = {
-        "title": "Liczba cząsteczek związku $name$ w czasie",
-        "xaxis": "Czas [h]",
-        "yaxis": "Liczba cząsteczek $name$",
-    }
+def save_plots(output_dir: Path, timetable, states: dict, labels: dict, split: bool):
+    while True:
+        if split:
+            plot_labels = {
+                "title": "Liczba cząsteczek związku $name$ w czasie",
+                "xaxis": "Czas [h]",
+                "yaxis": "Liczba cząsteczek $name$",
+            }
 
-    for symbol, values in states.items():
-        name = labels.get(symbol, symbol)
-        file_path = output_dir / f"{symbol}.png"
+            for symbol, values in states.items():
+                name = labels.get(symbol, symbol)
+                file_path = output_dir / f"{symbol}.png"
 
-        draw_reagent_plot(
-            values,
-            timetable,
-            name,
-            file=str(file_path),
-            labels=plot_labels,
-        )
+                draw_reagent_plot(
+                    values,
+                    timetable,
+                    name,
+                    file=str(file_path),
+                    labels=plot_labels,
+                )
+            break
+
+        else:
+            plot_labels = {
+                "title": "Liczba cząsteczek związków w czasie",
+                "xaxis": "Czas [h]",
+                "yaxis": "Liczba cząsteczek związku",
+            }
+
+            names = [labels.get(symbol, symbol) for symbol in states]
+            file_path = output_dir / f"Scenario.png"
+
+            try:
+                draw_bundled_reagent_plot(
+                    states,
+                    timetable,
+                    names,
+                    file=str(file_path),
+                    labels=plot_labels,
+                )
+                break
+
+            except ValueError:
+                print("Failed to draw bundled plot. Likely cause is too many reagents - try using the --split-plots option in future.")
+                print("Falling back to split plots automatically.")
+                split = False
 
 
 # Function that runs simulation for a single scenario
 # builds model, runs RK4, saves plots and optionally CSV
-def run_single_scenario(config: dict, scenario: str | None, output_dir: Path, write_csv: bool):
+def run_single_scenario(config: dict, scenario: str | None, output_dir: Path,\
+                        write_csv: bool, split : bool):
     model, start, step, timespan, labels, description = build_inputs(config, scenario)
 
     # Run RK4 simulation
@@ -55,7 +84,7 @@ def run_single_scenario(config: dict, scenario: str | None, output_dir: Path, wr
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Save plots
-    save_plots(output_dir, timetable, states, labels)
+    save_plots(output_dir, timetable, states, labels, split)
 
     # Optionally save CSV
     if write_csv:
@@ -98,6 +127,13 @@ def parse_args():
         help="Zapisz wyniki także do pliku CSV",
     )
 
+    parser.add_argument(
+        "--split-plots",
+        action="store_true",
+        dest="split",
+        help="Zamiast pojedynczego wykresu dla wszystkich związków w scenariuszu, wygeneruj oddzielny wykres dla każdego związku. W niektórych przypadkach (zbyt wiele związków, by zmieściły się na wykresie) użycie tej opcji może być niezbędne (w przeciwnym razie wystąpią błędy).",
+    )
+
     return parser.parse_args()
 
 
@@ -122,6 +158,7 @@ def main():
                 scenario=scenario,
                 output_dir=output_root / scenario,
                 write_csv=args.csv,
+                split=args.split
             )
 
     # Run single scenario
@@ -131,6 +168,7 @@ def main():
             scenario=args.scenario,
             output_dir=output_root,
             write_csv=args.csv,
+            split=args.split
         )
 
 
