@@ -1,0 +1,138 @@
+import argparse
+import csv
+from pathlib import Path
+
+from rk import rk4, draw_reagent_plot
+from config_loader import load_config, build_inputs, scenario_names
+
+
+# Function that saves simulation results to CSV file
+def save_csv(path: Path, timetable, states: dict):
+    symbols = list(states.keys())
+
+    with open(path, "w", newline="", encoding="utf-8") as file:
+        writer = csv.writer(file)
+
+        # Header: time + variable names
+        writer.writerow(["time", *symbols])
+
+        # Write rows: time + values of all variables
+        for i, t in enumerate(timetable):
+            row = [t] + [states[symbol][i] for symbol in symbols]
+            writer.writerow(row)
+
+
+# Function that generates and saves plots for each variable
+def save_plots(output_dir: Path, timetable, states: dict, labels: dict):
+    plot_labels = {
+        "title": "Liczba cząsteczek związku $name$ w czasie",
+        "xaxis": "Czas [h]",
+        "yaxis": "Liczba cząsteczek $name$",
+    }
+
+    for symbol, values in states.items():
+        name = labels.get(symbol, symbol)
+        file_path = output_dir / f"{symbol}.png"
+
+        draw_reagent_plot(
+            values,
+            timetable,
+            name,
+            file=str(file_path),
+            labels=plot_labels,
+        )
+
+
+# Function that runs simulation for a single scenario
+# builds model, runs RK4, saves plots and optionally CSV
+def run_single_scenario(config: dict, scenario: str | None, output_dir: Path, write_csv: bool):
+    model, start, step, timespan, labels, description = build_inputs(config, scenario)
+
+    # Run RK4 simulation
+    timetable, states = rk4(model, start, step, timespan)
+
+    # Create output directory
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Save plots
+    save_plots(output_dir, timetable, states, labels)
+
+    # Optionally save CSV
+    if write_csv:
+        save_csv(output_dir / "results.csv", timetable, states)
+
+    scenario_text = scenario if scenario else "default"
+    print(f"Zakończono scenariusz: {scenario_text}")
+    if description:
+        print(f"Opis: {description}")
+    print(f"Wyniki zapisano w: {output_dir}")
+
+
+# Function that parses CLI arguments
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Symulacja modelu biologicznego metodą Rungego-Kutty IV"
+    )
+
+    parser.add_argument(
+        "--config",
+        required=True,
+        help="Ścieżka do pliku YAML z modelem",
+    )
+
+    parser.add_argument(
+        "--scenario",
+        default=None,
+        help="Nazwa scenariusza z YAML, np. A, B, C, D albo all",
+    )
+
+    parser.add_argument(
+        "--out",
+        default="results",
+        help="Folder na wyniki",
+    )
+
+    parser.add_argument(
+        "--csv",
+        action="store_true",
+        help="Zapisz wyniki także do pliku CSV",
+    )
+
+    return parser.parse_args()
+
+
+# Main function controlling program execution
+def main():
+    args = parse_args()
+
+    # Load configuration from YAML
+    config = load_config(args.config)
+    output_root = Path(args.out)
+
+    # Run all scenarios
+    if args.scenario == "all":
+        names = scenario_names(config)
+
+        if not names:
+            raise ValueError("W pliku YAML nie ma żadnych scenariuszy.")
+
+        for scenario in names:
+            run_single_scenario(
+                config=config,
+                scenario=scenario,
+                output_dir=output_root / scenario,
+                write_csv=args.csv,
+            )
+
+    # Run single scenario
+    else:
+        run_single_scenario(
+            config=config,
+            scenario=args.scenario,
+            output_dir=output_root,
+            write_csv=args.csv,
+        )
+
+
+if __name__ == "__main__":
+    main()
